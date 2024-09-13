@@ -11,9 +11,8 @@ interface IVerifier {
     function verifyProof(
         uint256[2] calldata _pA, 
         uint256[2][2] calldata _pB, 
-        uint256[2] calldata _pC, 
-        uint256[0] calldata _pubSignals
-    ) public view returns (bool);
+        uint256[2] calldata _pC
+    ) external view returns (bool);
 }
 
 contract Groth16Verifier {
@@ -49,7 +48,7 @@ contract Groth16Verifier {
 
     uint16 constant pLastMem = 896;
 
-    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[0] calldata _pubSignals) public view returns (bool) {
+    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC) public view returns (bool) { // , uint[0] calldata _pubSignals
         assembly {
             function checkField(v) {
                 if iszero(lt(v, r)) {
@@ -83,8 +82,7 @@ contract Groth16Verifier {
                     return(0, 0x20)
                 }
             }
-
-            function checkPairing(pA, pB, pC, pubSignals, pMem) -> isOk {
+            function checkPairing(pA, pB, pC, pMem) -> isOk {
                 let _pPairing := add(pMem, pPairing)
                 let _pVk := add(pMem, pVk)
 
@@ -146,11 +144,10 @@ contract Groth16Verifier {
 
             // Validate that all evaluations ∈ F
             
-            checkField(calldataload(add(_pubSignals, 0)))
-            
+            // checkField(calldataload(add(_pubSignals, 0)))
 
             // Validate all evaluations
-            let isValid := checkPairing(_pA, _pB, _pC, _pubSignals, pMem)
+            let isValid := checkPairing(_pA, _pB, _pC, pMem) // _pubSignals,
 
             mstore(0, isValid)
              return(0, 0x20)
@@ -199,10 +196,9 @@ contract EscrowMP {
         uint256 amount,
         uint256[2] calldata _pA, 
         uint256[2][2] calldata _pB, 
-        uint256[2] calldata _pC, 
-        uint256[0] calldata _pubSignals
+        uint256[2] calldata _pC
     ) external {
-        require(verifier.verifyProof(_pA, _pB, _pC, _pubSignals), "Invalid Proof");
+        require(verifier.verifyProof(_pA, _pB, _pC), "Invalid Proof");
 
         Escrow storage escrow = escrows[escrowId];
         escrow.availableAmount -= amount;  // Reverts on underflow >=0.8

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
-import {EscrowMP} from "../src/EscrowMP.sol";
+import {EscrowMP, Groth16Verifier} from "../src/EscrowMP.sol";
 import {MockERC20} from "../src/MockERC20.sol";
 
 contract EscrowMPScript is Script {
@@ -14,8 +14,9 @@ contract EscrowMPScript is Script {
         vm.startBroadcast();
         MockERC20 token = new MockERC20("USDT", "USDT");
         token.mint(msg.sender, 100e6);
+        Groth16Verifier verifier = new Groth16Verifier();
 
-        escrow = new EscrowMP(address(0));  // TODO pass a verifier address
+        escrow = new EscrowMP(address(verifier));
 
         vm.stopBroadcast();
     }
